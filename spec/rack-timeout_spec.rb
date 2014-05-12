@@ -8,18 +8,18 @@ describe Rack::Timeout do
     Rack::Timeout.logger.level = ::Logger::FATAL
   end
 
-  def app(sleep_time = 0)
+  def app(&block)
     lambda do |_env|
-      sleep sleep_time
+      block.call
       [200, { 'Content-Type' => 'text/plain' }, ['hello']]
     end
   end
 
-  def middleware(timeout_time = 1, sleep_time = 0)
-    mw = Rack::Timeout.new(app(sleep_time))
+  def run_middleware_with_timeout(timeout_time = 1, &block)
+    mw = Rack::Timeout.new(app(&block))
     Rack::Timeout.timeout = timeout_time
 
-    mw
+    mw.call(mock_env)
   end
 
   def mock_env
@@ -28,7 +28,11 @@ describe Rack::Timeout do
 
   describe 'killing requests' do
     it 'kills a request that runs past the timeout' do
-      expect { middleware(0.1, 0.2).call(mock_env) }.to raise_error(Rack::Timeout::RequestTimeoutError)
+      expect { run_middleware_with_timeout(0.1) { sleep 0.2 } }.to raise_error(Rack::Timeout::RequestTimeoutError)
+    end
+
+    it 'kills a request that is I/O blocked at the correct time' do
+      
     end
   end
 
@@ -55,13 +59,13 @@ describe Rack::Timeout do
     end
 
     it 'notifies every second when a request is processing' do
-      middleware(5, 2.1).call(mock_env)
+      (middleware(5) { sleep 2.1 }).call(mock_env)
       expect(@notifications.find { |e| e.state == :active && e.duration.to_i == 1 }).to be_true
       expect(@notifications.find { |e| e.state == :active && e.duration.to_i == 2 }).to be_true
     end
 
     it 'notifies that a timed out request has been killed' do
-      middleware(0.1, 0.2).call(mock_env) rescue nil
+      middleware(0.1) { sleep 0.2 }.call(mock_env) rescue nil
       expect(@notifications.find { |e| e.state == :timed_out }).to be_true
     end
   end
