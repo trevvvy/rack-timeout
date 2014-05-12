@@ -6,6 +6,8 @@
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 require_relative '../lib/rack-timeout'
 require 'rack/mock'
+require 'excon'
+require 'pg'
 
 RSpec.configure do |config|
   config.treat_symbols_as_metadata_keys_with_true_values = true

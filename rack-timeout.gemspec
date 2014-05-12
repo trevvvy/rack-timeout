@@ -10,6 +10,9 @@ Gem::Specification.new do |spec|
   spec.license     = 'MIT'
 
   spec.add_dependency 'rack'
+  spec.add_development_dependency 'rake'
   spec.add_development_dependency 'rspec'
   spec.add_development_dependency 'guard-rspec'
+  spec.add_development_dependency 'excon'
+  spec.add_development_dependency 'pg'
 end
