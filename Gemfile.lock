@@ -7,6 +7,10 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
+    appraisal (1.0.0)
+      bundler
+      rake
+      thor (>= 0.14.0)
     celluloid (0.15.2)
       timers (~> 1.1.0)
     celluloid-io (0.15.0)
@@ -60,6 +64,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  appraisal
   excon
   guard-rspec
   pg
