@@ -9,6 +9,20 @@ require 'rack/mock'
 require 'excon'
 require 'pg'
 
+begin
+  Gem::Specification.find_by_name('rails')
+  require 'rails'
+rescue Gem::LoadError
+  puts "Rails not found"
+end
+
+begin
+  Gem::Specification.find_by_name('sinatra')
+  require 'sinatra'
+rescue Gem::LoadError
+  puts "Sinatra not found"
+end
+
 RSpec.configure do |config|
   config.treat_symbols_as_metadata_keys_with_true_values = true
   config.run_all_when_everything_filtered = true
