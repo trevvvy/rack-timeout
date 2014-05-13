@@ -45,6 +45,30 @@ describe Rack::Timeout do
       # allow for 10% error here
       expect(timeout_state.duration).to be_within(timeout * 0.1).of(timeout)
     end
+
+    it "is recoverable with nested begin/rescue/ensure blocks" do
+      timeout = 0.5
+      @important_resource_available = true
+      expect do
+        run_middleware_with_timeout(timeout) do
+          begin
+            # do some work here
+            raise "test exception"
+          rescue
+            begin
+              @important_resource_available = false
+              # do cleanup with important resource
+              sleep 1
+            ensure
+              @important_resource_available = true
+            end
+          end
+        end
+      end.to raise_exception
+      # important resource is still unavailable because rescue didn't finish
+      # the fact that this test passes is BAD
+      expect(@important_resource_available).to be_true
+    end
   end
 
   describe 'notifications' do
