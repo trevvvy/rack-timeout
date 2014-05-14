@@ -101,9 +101,22 @@ describe Rack::Timeout do
 
       # should show that we're in the foo method somewhere
       expect(@notifications.find { |e| e.stack != nil }.stack.find { |a| a =~ /foo/ }).to be_true
+      # should leave out gem dumps by default
+      expect(@notifications.find { |e| e.stack != nil }.stack.find { |a| a =~ /gems/ }).to be_false
     end
 
-    it 'includes gem files in backtrace if include_gems is true' do
+    it 'includes gem traces if include_gems is true' do
+      run_middleware_with_timeout_and_gems(1) do
+        def foo
+          bar
+        end
+        def bar
+          sleep 0.7
+        end
+        foo
+      end
+
+      expect(@notifications.find { |e| e.stack != nil }.stack.find { |a| a =~ /ruby\/gems/ }).to be_true
     end
 
     it 'notifies that a timed out request has been killed' do

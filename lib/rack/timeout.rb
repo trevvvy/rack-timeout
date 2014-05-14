@@ -48,6 +48,7 @@ module Rack
             break if sleep_seconds <= 0
             if !self.class.explain.nil? && info.duration >= self.class.explain
               info.stack = app_thread.backtrace 
+              info.stack = info.stack.reject { |e| e =~ /ruby\/gems/ } unless self.class.include_gems
             end
             Rack::Timeout._set_state! env, :active
             sleep(sleep_seconds)

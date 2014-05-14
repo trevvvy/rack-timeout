@@ -13,6 +13,14 @@ module MiddlewareHelper
     mw.call(mock_env)
   end
 
+  def run_middleware_with_timeout_and_gems(timeout_time = 0.1, &block)
+    mw = Rack::Timeout.new(app(&block))
+    Rack::Timeout.timeout = timeout_time
+    Rack::Timeout.explain = timeout_time / 2
+    Rack::Timeout.include_gems = true
+    mw.call(mock_env)
+  end
+  
   def mock_env
     Rack::MockRequest.env_for('/')
   end
