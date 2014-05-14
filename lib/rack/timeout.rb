@@ -7,14 +7,14 @@ module Rack
     class RequestExpiryError  < Error; end
     class RequestTimeoutError < Error; end
 
-    RequestDetails  = Struct.new(:id, :age, :timeout, :duration, :state)
+    RequestDetails  = Struct.new(:id, :age, :timeout, :duration, :state, :stack)
     ENV_INFO_KEY    = 'rack-timeout.info'
     VALID_STATES    = [:ready, :active, :expired, :timed_out, :completed]
     MAX_REQUEST_AGE = 30 # seconds
     @overtime       = 60 # seconds by which to extend MAX_REQUEST_AGE for requests that have a body (and have hence potentially waited long for the body to be received.)
     @timeout        = 15 # seconds
     class << self
-      attr_accessor :timeout, :overtime
+      attr_accessor :timeout, :overtime, :explain, :include_gems
     end
 
     def initialize(app)
@@ -46,6 +46,9 @@ module Rack
             info.duration = Time.now - ready_time
             sleep_seconds = [1, info.timeout - info.duration].min
             break if sleep_seconds <= 0
+            if !self.class.explain.nil? && info.duration >= self.class.explain
+              info.stack = app_thread.backtrace 
+            end
             Rack::Timeout._set_state! env, :active
             sleep(sleep_seconds)
           end

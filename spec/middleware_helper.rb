@@ -9,6 +9,7 @@ module MiddlewareHelper
   def run_middleware_with_timeout(timeout_time = 0.1, &block)
     mw = Rack::Timeout.new(app(&block))
     Rack::Timeout.timeout = timeout_time
+    Rack::Timeout.explain = timeout_time / 2
     mw.call(mock_env)
   end
 

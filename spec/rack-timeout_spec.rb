@@ -88,6 +88,24 @@ describe Rack::Timeout do
       expect(@notifications.find { |e| e.state == :active && e.duration.to_i == 2 }).to be_true
     end
 
+    it 'adds stack info to the notification when a request is past the "EXPLAIN" threshold' do
+      run_middleware_with_timeout(1) do
+        def foo
+          bar
+        end
+        def bar
+          sleep 0.7
+        end
+        foo
+      end
+
+      # should show that we're in the foo method somewhere
+      expect(@notifications.find { |e| e.stack != nil }.stack.find { |a| a =~ /foo/ }).to be_true
+    end
+
+    it 'includes gem files in backtrace if include_gems is true' do
+    end
+
     it 'notifies that a timed out request has been killed' do
       run_middleware_with_timeout(0.1) { sleep 0.2 } rescue nil
       expect(@notifications.find { |e| e.state == :timed_out }).to be_true
