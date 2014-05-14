@@ -119,6 +119,20 @@ describe Rack::Timeout do
       expect(@notifications.find { |e| e.stack != nil }.stack.find { |a| a =~ /ruby\/gems/ }).to be_true
     end
 
+    it 'limits the depth of the stack trace if stack_depth is set' do
+      run_middleware_with_timeout_and_stack_depth(1, 3) do
+        def foo
+          bar
+        end
+        def bar
+          sleep 0.7
+        end
+        foo
+      end
+
+      expect(@notifications.find { |e| e.stack != nil }.stack.length).to eq(3)
+    end
+
     it 'notifies that a timed out request has been killed' do
       run_middleware_with_timeout(0.1) { sleep 0.2 } rescue nil
       expect(@notifications.find { |e| e.state == :timed_out }).to be_true

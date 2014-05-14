@@ -14,7 +14,7 @@ module Rack
     @overtime       = 60 # seconds by which to extend MAX_REQUEST_AGE for requests that have a body (and have hence potentially waited long for the body to be received.)
     @timeout        = 15 # seconds
     class << self
-      attr_accessor :timeout, :overtime, :explain, :include_gems
+      attr_accessor :timeout, :overtime, :explain, :include_gems, :stack_depth
     end
 
     def initialize(app)
@@ -49,6 +49,7 @@ module Rack
             if !self.class.explain.nil? && info.duration >= self.class.explain
               info.stack = app_thread.backtrace 
               info.stack = info.stack.reject { |e| e =~ /ruby\/gems/ } unless self.class.include_gems
+              info.stack = info.stack[0, self.class.stack_depth] if self.class.stack_depth
             end
             Rack::Timeout._set_state! env, :active
             sleep(sleep_seconds)
