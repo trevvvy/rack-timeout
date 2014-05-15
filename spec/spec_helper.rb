@@ -12,6 +12,7 @@ require 'pg'
 begin
   Gem::Specification.find_by_name('rails')
   require 'rails'
+  require 'support/rails_3_generator'
 rescue Gem::LoadError
   puts "Rails not found"
 end
@@ -19,6 +20,7 @@ end
 begin
   Gem::Specification.find_by_name('sinatra')
   require 'sinatra'
+  puts "sinatra required"
 rescue Gem::LoadError
   puts "Sinatra not found"
 end
