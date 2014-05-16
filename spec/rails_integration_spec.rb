@@ -1,13 +1,15 @@
 require 'spec_helper'
 
-if defined?(Rails) && Rails::VERSION::MAJOR == 3
-  include Rails3Generator
+if defined?(Rails)
+  include Rails3Generator if Rails::VERSION::MAJOR == 3
+  include Rails4Generator if Rails::VERSION::MAJOR == 4
+
   RACK_TIMEOUT_TIME = 2
-  describe "Rails 3 Integration", type: :feature do
+  describe "Rails #{Rails::VERSION::MAJOR} Integration", type: :feature do
     before :all do
       create_app
       add_rack_timeout(RACK_TIMEOUT_TIME)
-      set_log_level(:debug)
+      set_log_level(:fatal)
       create_sleep_controller
       start_app
     end
@@ -28,6 +30,7 @@ if defined?(Rails) && Rails::VERSION::MAJOR == 3
       timeout_time = RACK_TIMEOUT_TIME
       response_time = Benchmark.realtime { Capybara.visit "/sleep/#{time}" }
       expect(Capybara.page.status_code).to eq(500)
+      expect(Capybara.page).to have_content("Request ran for longer")
       # allow an extra 0.5s
       expect(response_time).to be_within(0.5).of(timeout_time)
     end

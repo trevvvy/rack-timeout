@@ -13,6 +13,7 @@ begin
   Gem::Specification.find_by_name('rails')
   require 'rails'
   require 'support/rails_3_generator'
+  require 'support/rails_4_generator'
 rescue Gem::LoadError
   puts "Rails not found"
 end
