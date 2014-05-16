@@ -16,4 +16,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'excon'
   spec.add_development_dependency 'pg'
   spec.add_development_dependency 'appraisal'
+  spec.add_development_dependency 'capybara'
 end

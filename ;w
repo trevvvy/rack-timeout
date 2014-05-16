@@ -5,11 +5,10 @@ puts Rails::VERSION::MAJOR
 if defined?(Rails) && Rails::VERSION::MAJOR == 3
   include Rails3Generator
 
-  describe "Rails 3 Integration", type: :feature do
+  describe "Rails 3 Integration" do
     before :all do
       create_app
       add_middleware
-      create_sleep_controller
       start_app
     end
     
@@ -18,9 +17,7 @@ if defined?(Rails) && Rails::VERSION::MAJOR == 3
     end
 
     it "tests rails" do
-      Capybara.visit "sleep/1"
-      puts Capybara.page.status_code
-      puts Capybara.page.html
+      puts "hi"
     end
   end
 end
