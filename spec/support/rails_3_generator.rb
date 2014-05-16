@@ -18,6 +18,10 @@ module Rails3Generator
       transform_file("Gemfile") do |content|
         content << "gem 'rack-timeout', path: '#{PROJECT_ROOT}'"
       end
+
+      File.open("config/initializers/rack-timeout.rb", "w") do |file|
+        file.write "Rack::Timeout.timeout = 1\nRack::Timeout.environments = :production, :test"
+      end
     end
   end
 
@@ -35,7 +39,6 @@ module Rails3Generator
         file.write <<FILE
 class SleepController < ApplicationController
   def time
-    puts params
     sleep params[:time].to_i
     render text: params[:time]
   end

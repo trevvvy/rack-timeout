@@ -18,7 +18,7 @@ if defined?(Rails) && Rails::VERSION::MAJOR == 3
     end
 
     it "tests rails" do
-      Capybara.visit "sleep/1"
+      Capybara.visit "sleep/2"
       puts Capybara.page.status_code
       puts Capybara.page.html
     end
