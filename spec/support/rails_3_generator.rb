@@ -13,14 +13,29 @@ module Rails3Generator
     end
   end
 
-  def add_middleware
+  def add_rack_timeout(time = 1)
     Dir.chdir(APP_DIR) do
       transform_file("Gemfile") do |content|
-        content << "gem 'rack-timeout', path: '#{PROJECT_ROOT}'"
+        content << "gem 'rack-timeout', path: '#{PROJECT_ROOT}'\n"
+        content << "gem 'rails_12factor'\n"
       end
 
       File.open("config/initializers/rack-timeout.rb", "w") do |file|
-        file.write "Rack::Timeout.timeout = 1\nRack::Timeout.environments = :production, :test"
+        file.write "Rack::Timeout.timeout = #{time}"
+      end
+
+      transform_file("config/application.rb") do |content|
+        content = content.sub("  end\nend\n", "  config.middleware.insert 0, Rack::Timeout\n  end\nend\n")
+        content
+      end
+    end
+  end
+
+  def set_log_level(level)
+    Dir.chdir(APP_DIR) do
+      transform_file("config/environments/#{Rails.env}.rb") do |contents|
+        contents = contents.sub("Testapp::Application.configure do\n", "Testapp::Application.configure do\nconfig.log_level = :#{level}")
+        contents
       end
     end
   end
@@ -39,7 +54,7 @@ module Rails3Generator
         file.write <<FILE
 class SleepController < ApplicationController
   def time
-    sleep params[:time].to_i
+    sleep params[:time].to_f
     render text: params[:time]
   end
 end
