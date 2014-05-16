@@ -1,7 +1,5 @@
 require 'spec_helper'
 
-puts defined?(Rails)
-puts Rails::VERSION::MAJOR
 if defined?(Rails) && Rails::VERSION::MAJOR == 3
   include Rails3Generator
   RACK_TIMEOUT_TIME = 2
