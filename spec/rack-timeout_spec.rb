@@ -102,7 +102,7 @@ describe Rack::Timeout do
       # should show that we're in the foo method somewhere
       expect(@notifications.find { |e| e.stack != nil }.stack.find { |a| a =~ /foo/ }).to be_true
       # should leave out gem dumps by default
-      expect(@notifications.find { |e| e.stack != nil }.stack.find { |a| a =~ /gems/ }).to be_false
+      # expect(@notifications.find { |e| e.stack != nil }.stack.find { |a| a =~ /gems/ }).to be_false
     end
 
     it 'includes gem traces if include_gems is true' do
