@@ -8,4 +8,13 @@ Gem::Specification.new do |spec|
   spec.email       = 'dev@caiochassot.com'
   spec.files       = Dir[*%w( MIT-LICENSE README.markdown lib/**/* )]
   spec.license     = 'MIT'
+
+  spec.add_dependency 'rack'
+  spec.add_development_dependency 'rake'
+  spec.add_development_dependency 'rspec'
+  spec.add_development_dependency 'guard-rspec'
+  spec.add_development_dependency 'excon'
+  spec.add_development_dependency 'pg'
+  spec.add_development_dependency 'appraisal'
+  spec.add_development_dependency 'capybara'
 end

@@ -13,6 +13,7 @@ module Rack
       :service,   # time rack spent processing the request (updated ~ every second)
       :timeout,   # the actual computed timeout to be used for this request
       :state,     # the request's current state, see below:
+      :stack,
       )
     VALID_STATES = [
       :expired,   # The request was too old by the time it reached rack (see wait_timeout, wait_overtime)
@@ -50,6 +51,7 @@ module Rack
     class << self
       alias_method :timeout=, :service_timeout= # legacy compatibility setter
       attr_accessor :service_past_wait    # when false, reduces the request's computed timeout from the service_timeout value if the complete request lifetime (wait + service) would have been longer than wait_timeout (+ wait_overtime when applicable). When true, always uses the service_timeout value.
+      attr_accessor :explain, :include_gems, :stack_depth
       @service_past_wait = false          # we default to false under the assumption that the router would drop a request that's not responded within wait_timeout, thus being there no point in servicing beyond seconds_service_left (see code further down) up until service_timeout.
     end
 
@@ -95,6 +97,11 @@ module Rack
             info.service  = Time.now - time_started_service
             sleep_seconds = [1 - (info.service % 1), info.timeout - info.service].min
             break if sleep_seconds <= 0
+            if !self.class.explain.nil? && info.service >= self.class.explain
+              info.stack = app_thread.backtrace
+              info.stack = info.stack.reject { |e| e =~ /ruby\/gems/ } unless self.class.include_gems
+              info.stack = info.stack[0, self.class.stack_depth] if self.class.stack_depth
+            end
             RT._set_state! env, :active
             sleep(sleep_seconds)
           end

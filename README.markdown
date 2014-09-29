@@ -233,6 +233,75 @@ A sample log excerpt might look like:
 
 (IDs shortened for readability.)
 
+Warning
+-------
+
+Rack::Timeout raises an exception in the web app's thread when time expires. This can have unintended
+side effects. For example, consider this block of code that locks an important resource during `rescue`:
+
+```ruby
+begin
+  do_something
+  raise "an exception"
+rescue
+  lock_important_resource
+  do_cleanup
+  # Rack::Timeout exception is thrown while do_cleanup is executing
+  unlock_important_resource
+end
+```
+
+If Rack::Timeout throws a timeout exception where indicated, `unlock_important_resource` will never
+get called, and it might leave your app in an unknown state.
+
+If you have code doing this, you can use a nested begin/ensure block to attempt to clean up state:
+
+```ruby
+begin
+  do_something
+  raise "an exception"
+rescue
+  begin
+    lock_important_resource
+    do_cleanup
+    # Rack::Timeout exception is thrown while do_cleanup is executing
+  ensure
+    unlock_important_resource
+  end
+end
+```
+
+Of course, there's still the possibility that Rack::Timeout will raise
+during the ensure block, which is unavoidable given the way Rack::Timeout
+works. If you have mission critical code in rescue/ensure blocks like
+this, it might be a good idea to avoid Rack::Timeout.
+
+Tests
+-----
+
+This gem is tested with [RSpec](https://rubygems.org/gems/rspec). You can run the tests with `bundle exec rake spec`, or just `bundle exec rake`. Please note I was writing the specs while figuring out the below appraisals section, so they definitely need to be cleaned up. :)
+
+Integration testing with `appraisal`
+====================================
+
+In addition to running the specs directly, you can also run an integration test inside a Rails 3, Rails 4 or Sinatra app using the [Appraisal](https://github.com/thoughtbot/appraisal) gem. To do that:
+
+```
+# Install gems with:
+$ appraisal install
+
+# Then run specs with each appraisal:
+$ appraisal bundle exec rake
+
+# Or run it with a single appraisal:
+$ appraisal rails-3 bundle exec rake
+
+# Run only the Rails-specific stuff:
+$ appraisal rails-3 bundle exec rspec spec/rails_integration_spec.rb
+```
+
+to install the gems for each environment. There are additional specs in `spec/rails_integration_spec.rb` and `spec\sinatra_integration_spec.rb` that will only run if a Rails or Sinatra app is present.
+
 
 Compatibility
 -------------
