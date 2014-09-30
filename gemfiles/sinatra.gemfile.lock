@@ -1,7 +1,7 @@
 PATH
   remote: ../
   specs:
-    rack-timeout (0.1.0beta2)
+    rack-timeout (0.1.0beta4)
       rack
 
 GEM

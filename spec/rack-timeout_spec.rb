@@ -8,7 +8,7 @@ describe Rack::Timeout do
 
   before :each do
     # shut up the logger
-    Rack::Timeout.logger.level = ::Logger::FATAL
+    Rack::Timeout.unregister_state_change_observer(:logger)
     @notifications = []
     Rack::Timeout.register_state_change_observer(:test_observer) do |env|
       @notifications << env["rack-timeout.info"].dup
