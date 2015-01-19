@@ -47,7 +47,7 @@ describe Rack::Timeout do
     context "when overtime is set" do
       before do
         Rack::Timeout.timeout = 1
-        Rack::Timeout.overtime = 3
+        Rack::Timeout.wait_overtime = 3
       end
 
       context 'and the request takes longer than the timeout, but less than the overtime' do
