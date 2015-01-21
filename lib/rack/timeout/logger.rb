@@ -52,6 +52,7 @@ class Rack::Timeout
         s << ' state='   << info.state.to_s   if info.state
         s
       end
+      logger(env).send(level, "Trace at state change to #{info.state}:\n#{info.trace.join("\n")}")
     end
 
   end

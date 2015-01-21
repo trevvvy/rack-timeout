@@ -13,6 +13,7 @@ module Rack
       :service,   # time rack spent processing the request (updated ~ every second)
       :timeout,   # the actual computed timeout to be used for this request
       :state,     # the request's current state, see below:
+      :trace,     # stack on app thread at the moment of a state change
     ) {
       def ms(k)   # helper method used for formatting values in milliseconds
         '%.fms' % (self[k] * 1000) if self[k]
@@ -91,17 +92,21 @@ module Rack
       info.timeout = RT.service_timeout # nice and simple, when service_past_wait is true, not so much otherwise:
       info.timeout = seconds_service_left if !RT.service_past_wait && seconds_service_left && seconds_service_left > 0 && seconds_service_left < RT.service_timeout
 
+      app_thread = Thread.current
+      set_trace = -> { env[ENV_INFO_KEY].trace = app_thread.backtrace }
+      set_trace[]
       RT._set_state! env, :ready
       begin
-        app_thread     = Thread.current
         timeout_thread = Thread.start do
           loop do
             info.service  = Time.now - time_started_service
             sleep_seconds = [1 - (info.service % 1), info.timeout - info.service].min
             break if sleep_seconds <= 0
+            set_trace[]
             RT._set_state! env, :active
             sleep(sleep_seconds)
           end
+          set_trace[]
           RT._set_state! env, :timed_out
           app_thread.raise(RequestTimeoutError, "Request #{"waited #{info.ms(:wait)}, then " if info.wait}ran for longer than #{info.ms(:timeout)}")
         end
@@ -112,6 +117,7 @@ module Rack
       end
 
       info.service = Time.now - time_started_service
+      set_trace[]
       RT._set_state! env, :completed
       response
     end
