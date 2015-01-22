@@ -50,9 +50,9 @@ class Rack::Timeout
         s << ' timeout=' << info.ms(:timeout) if info.timeout
         s << ' service=' << info.ms(:service) if info.service
         s << ' state='   << info.state.to_s   if info.state
+        s << " trace=\n#{info.trace.join("\n")}" if info.trace
         s
       end
-      logger(env).send(level, "Trace at state change to #{info.state}:\n#{info.trace.join("\n")}")
     end
 
   end
