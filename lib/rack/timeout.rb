@@ -109,6 +109,9 @@ module Rack
           set_trace[]
           RT._set_state! env, :timed_out
           app_thread.raise(RequestTimeoutError, "Request #{"waited #{info.ms(:wait)}, then " if info.wait}ran for longer than #{info.ms(:timeout)}")
+          # setting trace/state on timed_out again after raising to log the new trace and see if the error was rescued, etc.
+          set_trace[]
+          RT._set_state! env, :timed_out
         end
         response = @app.call(env)
       ensure
