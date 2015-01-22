@@ -93,11 +93,11 @@ module Rack
       info.timeout = seconds_service_left if !RT.service_past_wait && seconds_service_left && seconds_service_left > 0 && seconds_service_left < RT.service_timeout
 
       app_thread = Thread.current
-      set_trace = -> { env[ENV_INFO_KEY].trace = app_thread.backtrace }
-      set_trace[]
-      RT._set_state! env, :ready
+      set_trace = -> (clear=false){ env[ENV_INFO_KEY].trace = clear ? nil : app_thread.backtrace }
       begin
         timeout_thread = Thread.start do
+          set_trace[]
+          RT._set_state! env, :ready
           loop do
             info.service  = Time.now - time_started_service
             sleep_seconds = [1 - (info.service % 1), info.timeout - info.service].min
@@ -120,7 +120,7 @@ module Rack
       end
 
       info.service = Time.now - time_started_service
-      set_trace[]
+      set_trace[:clear]
       RT._set_state! env, :completed
       response
     end
