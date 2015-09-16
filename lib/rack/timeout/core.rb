@@ -5,6 +5,36 @@ require_relative "support/timeout"
 
 module Rack
   class Timeout
+
+
+    module EnvHijack
+
+      Hash.instance_methods.each do |m|
+
+        define_method(m.to_s.sub(/(?=[!?]?$)/, "_without_hijack")) { |*a,&b| Hash.instance_method(m).bind(self).call *a,&b }
+
+        define_method m do |*a,&b|
+          has_rt_info_before = member_without_hijack? "rack-timeout.info" #Rack::Timeout::ENV_INFO_KEY
+          result = super *a,&b
+          has_rt_info_after = member_without_hijack? "rack-timeout.info"  #Rack::Timeout::ENV_INFO_KEY
+          if has_rt_info_before && !has_rt_info_after
+            caller.each_with_index do |line, ix|
+              warn "source=rack-timeout-debug id=#{req_id} ix=#{ix} call=#{line}\n"
+            end
+          end
+          return result
+        end
+
+      end
+
+      def req_id
+        @req_id ||= self["HTTP_X_REQUEST_ID"] || SecureRandom.hex
+      end
+    end
+
+
+    include Rack::Timeout::MonotonicTime # gets us the #fsecs method
+
     module ExceptionWithEnv # shared by the following exceptions, allows them to receive the current env
       attr :env
       def initialize(env)
@@ -80,6 +110,10 @@ module Rack
     def call(env)
       info      = (env[ENV_INFO_KEY] ||= RequestDetails.new)
       info.id ||= env["HTTP_X_REQUEST_ID"] || SecureRandom.hex
+
+      class << env
+        prepend EnvHijack unless ancestors.include? EnvHijack
+      end
 
       time_started_service = Time.now                      # The time the request started being processed by rack
       time_started_wait    = RT._read_x_request_start(env) # The time the request was initially received by the web server (if available)
@@ -165,8 +199,13 @@ module Rack
 
     def self._set_state!(env, state)
       raise "Invalid state: #{state.inspect}" unless VALID_STATES.include? state
-      env[ENV_INFO_KEY].state = state
-      notify_state_change_observers(env)
+      info = env[ENV_INFO_KEY]
+      if info.nil?
+        warn "source=rack-timeout-debug info-vanish id=#{env.req_id}\n"
+        return
+      end
+      info.state = state
+      RT.notify_state_change_observers(env)
     end
 
     ### state change notification-related methods
