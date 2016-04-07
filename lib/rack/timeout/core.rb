@@ -7,7 +7,7 @@ require_relative "legacy"
 
 module Rack
   class Timeout
-
+    HIJACK_FREQUENCY = (f = ENV["RACK_TIMEOUT_HIJACK_FREQUENCY"]) ? f.to_f : 1.0 # 100% default
 
     module EnvHijack
 
@@ -106,8 +106,10 @@ module Rack
       info      = (env[ENV_INFO_KEY] ||= RequestDetails.new)
       info.id ||= env["HTTP_X_REQUEST_ID"] || SecureRandom.hex
 
-      class << env
-        prepend EnvHijack unless ancestors.include? EnvHijack
+      if rand < HIJACK_FREQUENCY
+        class << env
+          prepend EnvHijack unless ancestors.include? EnvHijack
+        end
       end
 
       time_started_service = Time.now                      # The wall time the request started being processed by rack
@@ -198,7 +200,7 @@ module Rack
       raise "Invalid state: #{state.inspect}" unless VALID_STATES.include? state
       info = env[ENV_INFO_KEY]
       if info.nil?
-        warn "source=rack-timeout-debug info-vanish id=#{env.req_id}\n"
+        warn "source=rack-timeout-debug info-vanish id=#{env.respond_to?(:req_id) ? env.req_id : env["HTTP_X_REQUEST_ID"]}\n"
         return
       end
       info.state = state
