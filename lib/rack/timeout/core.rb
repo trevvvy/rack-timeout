@@ -11,14 +11,15 @@ module Rack
 
     module EnvHijack
 
-      Hash.instance_methods.each do |m|
+      SKIP = %i{ < <= == > >= [] === != <=> =~ !~ ! fetch values_at length size count itself }
+      (Hash.instance_methods.reject { |i| i =~ /^__|\?$/ } - SKIP).each do |m|
 
-        define_method(m.to_s.sub(/(?=[!?]?$)/, "_without_hijack")) { |*a,&b| Hash.instance_method(m).bind(self).call *a,&b }
+        define_method(m.to_s.sub(/(?=[!=]?$)/, "_without_hijack")) { |*a,&b| Hash.instance_method(m).bind(self).call *a,&b }
 
         define_method m do |*a,&b|
-          has_rt_info_before = member_without_hijack? "rack-timeout.info" #Rack::Timeout::ENV_INFO_KEY
+          has_rt_info_before = member? "rack-timeout.info" # Rack::Timeout::ENV_INFO_KEY
           result = super *a,&b
-          has_rt_info_after = member_without_hijack? "rack-timeout.info"  #Rack::Timeout::ENV_INFO_KEY
+          has_rt_info_after = member? "rack-timeout.info"
           if has_rt_info_before && !has_rt_info_after
             caller.each_with_index do |line, ix|
               warn "source=rack-timeout-debug id=#{req_id} ix=#{ix} call=#{line}\n"
