@@ -1,3 +1,26 @@
+0.5.1
+=====
+- Fixes setting ENV vars to false or 0 would not disable a timeout
+  (#133)
+
+0.5.0.1
+=======
+- Fix 0600 permissions in gem pushed to rubygems
+
+0.5.0
+=====
+
+Breaking Changes
+
+- Remove Rollbar module (#124)
+- Remove legacy class setters (#125)
+
+Other
+
+- Add support to configure via environment variables (#105)
+- Adds support for ActionDispatch::RequestId generated request ids (#115)
+- Changes uuid format to proper uuid (#115)
+
 0.4.2
 =====
 - Ruby 2.0 compatible
